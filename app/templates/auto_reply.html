@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>จัดการการตอบกลับอัตโนมัติ</h2>
+    
+    <!-- แบบฟอร์มเพิ่มการตอบกลับอัตโนมัติ -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">เพิ่มการตอบกลับอัตโนมัติใหม่</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('add_auto_reply') }}">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="keyword">คำค้นหา</label>
+                            <input type="text" class="form-control" id="keyword" name="keyword" required>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label for="reply_type">ประเภทการตอบกลับ</label>
+                            <select class="form-control" id="reply_type" name="reply_type" required>
+                                <option value="text">ข้อความ</option>
+                                <option value="image">รูปภาพ</option>
+                                <option value="sticker">สติกเกอร์</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="reply_content">เนื้อหาการตอบกลับ</label>
+                            <input type="text" class="form-control" id="reply_content" name="reply_content" required>
+                            <small class="form-text text-muted">
+                                สำหรับรูปภาพและสติกเกอร์ ให้ใส่ URL หรือ ID
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">เพิ่มการตอบกลับ</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- รายการการตอบกลับอัตโนมัติ -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">รายการการตอบกลับอัตโนมัติ</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>คำค้นหา</th>
+                            <th>ประเภท</th>
+                            <th>เนื้อหา</th>
+                            <th>สถานะ</th>
+                            <th>จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reply in auto_replies %}
+                        <tr>
+                            <td>{{ reply.keyword }}</td>
+                            <td>{{ reply.reply_type }}</td>
+                            <td>{{ reply.reply_content }}</td>
+                            <td>
+                                <span class="badge {% if reply.is_active %}badge-success{% else %}badge-secondary{% endif %}">
+                                    {{ 'เปิดใช้งาน' if reply.is_active else 'ปิดใช้งาน' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            onclick="editAutoReply({{ reply.id }})">
+                                        แก้ไข
+                                    </button>
+                                    <button type="button" class="btn btn-sm {% if reply.is_active %}btn-warning{% else %}btn-success{% endif %}"
+                                            onclick="toggleAutoReply({{ reply.id }})">
+                                        {{ 'ปิดใช้งาน' if reply.is_active else 'เปิดใช้งาน' }}
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger"
+                                            onclick="deleteAutoReply({{ reply.id }})">
+                                        ลบ
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal แก้ไขการตอบกลับอัตโนมัติ -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">แก้ไขการตอบกลับอัตโนมัติ</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" method="POST">
+                    <div class="form-group">
+                        <label for="edit_keyword">คำค้นหา</label>
+                        <input type="text" class="form-control" id="edit_keyword" name="keyword" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_reply_type">ประเภทการตอบกลับ</label>
+                        <select class="form-control" id="edit_reply_type" name="reply_type" required>
+                            <option value="text">ข้อความ</option>
+                            <option value="image">รูปภาพ</option>
+                            <option value="sticker">สติกเกอร์</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="edit_reply_content">เนื้อหาการตอบกลับ</label>
+                        <input type="text" class="form-control" id="edit_reply_content" name="reply_content" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">ยกเลิก</button>
+                <button type="button" class="btn btn-primary" onclick="submitEdit()">บันทึก</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function editAutoReply(id) {
+    // ดึงข้อมูลการตอบกลับอัตโนมัติและแสดงใน modal
+    fetch(`/auto-reply/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('edit_keyword').value = data.keyword;
+            document.getElementById('edit_reply_type').value = data.reply_type;
+            document.getElementById('edit_reply_content').value = data.reply_content;
+            document.getElementById('editForm').action = `/auto-reply/${id}/edit`;
+            $('#editModal').modal('show');
+        });
+}
+
+function submitEdit() {
+    document.getElementById('editForm').submit();
+}
+
+function toggleAutoReply(id) {
+    if (confirm('ต้องการเปลี่ยนสถานะการใช้งาน?')) {
+        fetch(`/auto-reply/${id}/toggle`, { method: 'POST' })
+            .then(() => window.location.reload());
+    }
+}
+
+function deleteAutoReply(id) {
+    if (confirm('ต้องการลบการตอบกลับอัตโนมัตินี้?')) {
+        fetch(`/auto-reply/${id}/delete`, { method: 'POST' })
+            .then(() => window.location.reload());
+    }
+}
+</script>
+{% endblock %} 

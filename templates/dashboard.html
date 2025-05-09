@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3">
+            <div class="list-group">
+                <a href="{{ url_for('dashboard') }}" class="list-group-item list-group-item-action active">
+                    <i class="fas fa-home"></i> หน้าหลัก
+                </a>
+                <a href="{{ url_for('auto_reply') }}" class="list-group-item list-group-item-action">
+                    <i class="fas fa-reply-all"></i> ตอบกลับอัตโนมัติ
+                </a>
+                <a href="{{ url_for('connect_line') }}" class="list-group-item list-group-item-action">
+                    <i class="fab fa-line"></i> เชื่อมต่อกับ Line
+                </a>
+                <a href="{{ url_for('logout') }}" class="list-group-item list-group-item-action text-danger">
+                    <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">ยินดีต้อนรับ, {{ current_user.username }}!</h5>
+                </div>
+                <div class="card-body">
+                    <!-- Line Connection Status -->
+                    <div class="alert {% if current_user.line_user_id %}alert-success{% else %}alert-warning{% endif %}">
+                        <h5><i class="fab fa-line"></i> สถานะการเชื่อมต่อ Line</h5>
+                        {% if current_user.line_user_id %}
+                            <p class="mb-0">เชื่อมต่อกับ Line แล้ว (ID: {{ current_user.line_user_id }})</p>
+                        {% else %}
+                            <p class="mb-0">ยังไม่ได้เชื่อมต่อกับ Line</p>
+                            <a href="{{ url_for('connect_line') }}" class="btn btn-primary mt-2">
+                                <i class="fab fa-line"></i> เชื่อมต่อกับ Line
+                            </a>
+                        {% endif %}
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">การตอบกลับอัตโนมัติ</h5>
+                                    <p class="card-text display-4">{{ auto_replies_count|default(0) }}</p>
+                                    <a href="{{ url_for('auto_reply') }}" class="btn btn-light btn-sm">จัดการ</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">ข้อความที่ได้รับ</h5>
+                                    <p class="card-text display-4">{{ messages_count|default(0) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">ผู้ใช้ที่เชื่อมต่อ</h5>
+                                    <p class="card-text display-4">{{ connected_users|default(0) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Messages -->
+                    <div class="mt-4">
+                        <h5>ข้อความล่าสุด</h5>
+                        <div class="list-group">
+                            {% for message in recent_messages|default([]) %}
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">{{ message.sender }}</h6>
+                                    <small>{{ message.timestamp }}</small>
+                                </div>
+                                <p class="mb-1">{{ message.content }}</p>
+                            </div>
+                            {% else %}
+                            <div class="list-group-item">
+                                <p class="mb-0 text-muted">ยังไม่มีข้อความ</p>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
